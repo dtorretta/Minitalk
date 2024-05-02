@@ -43,13 +43,13 @@ void	SIGUSR_handler(int sig, siginfo_t *info, void *context)
         if (byte == '\0') //se;al de que se termino de imprimir todo
         {
             //printf("check.\n");
-            printf("\n%s%d Signals received successfully!\n", GREEN, signal);
+            printf("\n%s%d Signals received successfully!%s\n\n", GREEN, signal, END);
             byte = 0;
             i = 0;
             signal = 0; //no puedo dorectamente quitarle el static int
             if (kill(client_pid, SIGUSR1) == -1)
             {
-                printf("\n%sServer: unexpected error.\n", RED);
+                printf("\n%sServer: unexpected error.%s\n", RED, END);
 	            exit(EXIT_FAILURE);  
             }
             return; //no hay nada mas que recibir
@@ -73,8 +73,8 @@ int main (void)
     printf("██║╚██╔╝██║██║██║╚██╗██║██║   ██║   ██╔══██║██║     ██╔═██╗ \n");
     printf("██║ ╚═╝ ██║██║██║ ╚████║██║   ██║   ██║  ██║███████╗██║  ██╗\n");
     printf("╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝\n\n");
-    printf("%s                        PID: %d\n", RED, pid_server);
-    printf("%s                ⊱ ────────────────────── ⊰\n", RED);
+    printf("%s                        PID: %d%s\n", RED, pid_server, END);
+    printf("%s                ⊱ ────────────────────── ⊰%s\n", RED, END);
     
     struct sigaction	bitereceived;
     bitereceived.sa_sigaction = SIGUSR_handler;
