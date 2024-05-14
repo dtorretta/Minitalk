@@ -12,8 +12,26 @@
 
 #include "minitalk.h"
 
+static void error_msg(int i)
+{
+	if(i == 1)
+	{
+		ft_printf("%s\nError. please follow the format: <server_pid>", RED);
+		ft_printf(" <text to send>\n");
+		ft_printf("%s\nIf the text to send contains more than one word, ", END);
+		ft_printf("please enclose it in quotes\n");
+		ft_printf("\nexample: 1234 \"This is an example\"\n\n");
+	}
+	else if(i == 2)
+		ft_printf("%s\nError: The PID must be a positive integer.\n\n", RED);
+	else if(i == 3)
+		ft_printf("%s\nError: Please, insert a non-empty message.\n\n", RED);
+	else if(i == 4)
+		ft_printf("\n%s client: unexpected error.\n", RED);
+	exit (EXIT_FAILURE);
+}
 
-int	is_num(char *num)
+static int	is_num(char *num)
 {
 	int i;
 
@@ -27,107 +45,78 @@ int	is_num(char *num)
 	return (1);
 }
 
-// convierte un carácter en su representación binaria y luego envía esta representación bit a bit a través de señales de UNIX
-// LO HAGO CON BINARIO PORQUE CON 0 Y 1 PUEDO ENVIAR HASTA 2 E;ALES
-//cada caracter lo leo bit a bit
-//se ejecuta el bucle 8 veces, una vez por cada bit en la representación binaria de c.
-//verifica si el bit más significativo (izquierda) es 1 (& 128). Si es 1, envía la señal SIGUSR1. Si es 0, envía la señal SIGUSR2.
-//c = c << 1; me muevo al sigueinte bit del char
-//pause(); // si no le pongo el sleep hay se;ales que se pierden
-
-void	chartobin(char c, int pid)
+//It iterates char by char
+//Each char has its binary representation composed of 8 bits combining 0 and 1.
+//it checks if the most significant bit (leftmost) is 1 (& 128). 
+//If it's 1, it sends SIGUSR1 signal. If it's 0, it sends SIGUSR2 signal.
+//(c = c << 1) moves to the next bit of the character.
+//At the end, it sends the null character to indicate the end of the text.
+static void char_to_bin(char *text, int s_pid)
 {
+	int i;
 	int bit;
-
-	bit = 0;
-	while (bit < 8)
+	
+	i = -1;
+	while (text[++i])
 	{
-		if (c & 128) // de esta forma siempre comparo con el mas signficativo
+		bit = 0;
+		while (bit++ < 8)
 		{
-			if (kill(pid, SIGUSR1) == -1)
+			if (text[i] & 128)
 			{
-				printf("\n%s client: unexpected error.\n", RED); //arreglar los printf!!!!!
-				exit(EXIT_FAILURE);
+				if (kill(s_pid, SIGUSR1) == -1)
+					error_msg(4);
 			}
-		}
-		else
-		{
-			if (kill(pid, SIGUSR2) == -1)
+			else
 			{
-				printf("\n%sclient: unexpected error.\n", RED);
-				exit(EXIT_FAILURE);
+				if (kill(s_pid, SIGUSR2) == -1)
+					error_msg(4);
 			}
-		}
-		c = c << 1;
-		bit++;
-		pause();
-		usleep(100);
+			text[i] = text[i] << 1;
+			pause();
+			usleep(100);
+		}		
 	}
+	char_to_bin('\0', s_pid);
 }
 
-//funcion par enviar el texto ungresado como parametro
-//itera caracter por caracter y llama a la funcion chartobin para transformarlo en binario
-// al final tengo que enviar el null caracter para indicar el fin del texto a enviar
-void text_sender(char *text, int s_pid)
+//When SIGUSR2 is received, it just increases a received signals counter. 
+//Until SIGUSR1 is received, it means that not all the text has been sent.
+//When SIGUSR1 is received, the signals were successfully sent.
+static void    signal_handler(int sig) 
 {
-	int i = 0;
-	while (text[i])
-	{
-		chartobin(text[i], s_pid);
-		i++;
-	}
-	chartobin('\0', s_pid);
-}
-
-//Cuando recibe la señal SIGUSR2, simplemente incrementa un contador de señales recibidas. 
-//Hasta que no se recibe SIGUSR1, significa que o se envio todo el texto.
-//Cuando recibe la señal SIGUSR1, las señales se enviaron con éxito y termina el programa (EXIT_SUCCESS). 
-void	signal_handler(int sig)
-{
-	static int signal = 0;
-
+	static int signal;
+	
+	signal = 0;
 	if (sig == SIGUSR1)
 	{
-		printf("\n%s%d Signals sent successfully!\n", GREEN, ++signal);
-			// aumenta antes para por lo menos enviar 1
+		ft_printf("\n%s%d Signals sent successfully!\n", GREEN, ++signal);
 		exit(EXIT_SUCCESS);
 	}
 	else if (sig == SIGUSR2)
 		signal++;
 }
 
-//error managing: negativ PID or non numeric arguments
-int	main(int argc, char **argv)
+//Error managing: cero/negativ PID or non numeric arguments
+int main(int argc, char **argv)
 {
-	pid_t pid_client = getpid();
-	pid_t pid_server = atoi(argv[1]);
 	if (argc != 3)
-	{
-		ft_printf("%sError. please follow the format: <server_pid> <text to send>\n",RED);
-		ft_printf("If the text to send contains more than one word, please enclose it in quotes\n");
-		ft_printf("example: 1234 \"This is an example\"\n");
-		return (EXIT_FAILURE);
-	}
-	else
-	{
-		// si es 0 o negativo esta mal (o deberia aceptar 0)??
-		if (pid_server < 0 || !is_num(argv[1]))
-		{
-			ft_putendl_fd(("%sError: The PID must be a positive integer.\n", RED), 2);
-			return (EXIT_FAILURE);
-		}
-		if (!argv[2][0])
-		{
-			ft_printf("%sError: Please, insert a non-empty message.\n", RED);
-			return (EXIT_FAILURE);
-		}
-		ft_printf("Cliente PID: %d\n", pid_client);
-		ft_printf("Text to send: %s\n", argv[2]);
-		ft_printf("%sSending text..\n", YELLOW);
-		signal(SIGUSR1, signal_handler);
-		signal(SIGUSR2, signal_handler);
-		text_sender(argv[2], pid_server);
-	}
+		error_msg(1);
+
+	pid_t pid_client;
+	pid_t pid_server;
+	
+	pid_client = getpid();
+	pid_server = atoi(argv[1]);
+	if (pid_server <= 0 || !is_num(argv[1]))
+		error_msg(2);
+	else if (!argv[2][0])
+		error_msg(3);
+	ft_printf("Client PID: %d\n", pid_client);
+	ft_printf("Text to send: %s\n", argv[2]);
+	ft_printf("%sSending text..\n", YELLOW);
+	signal(SIGUSR1, signal_handler);
+	signal(SIGUSR2, signal_handler);
+	char_to_bin(argv[2], pid_server);
 	return (0);
 }
-

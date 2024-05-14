@@ -12,12 +12,35 @@
 
 #include "minitalk.h"
 
+//It prints the character received and checks if it is the null character.
+//If so, that means that the string was fully printed.
+//'signals' is set to 0, ready to receive a new string and start counting again
+//As it uses 'EXIT_SUCCESS' and not 'exit (EXIT_SUCCESS)', the program 
+//will remain open, ready to receive a new string.
+int bin_to_char(char byte, int signal, int client_pid)
+{
+	ft_putchar_fd(byte, 1);
+	if (byte == '\0')
+	{
+		ft_printf("\n%s%d Signals received successfully!%s\n\n", GREEN, signal,
+			END);
+		signal = 0;
+		if (kill(client_pid, SIGUSR1) == -1)
+		{
+			ft_printf("\n%sServer: unexpected error.%s\n", RED, END);
+			exit(EXIT_FAILURE);
+		}
+		EXIT_SUCCESS ;
+	}
+	return(signal);
+}
 
-/*al usar static, las variables (bit, byte, e i) mantienen su valor
-entre las llamadas a la función. Esto significa que, por ejemplo,
-	si i se incrementó a 8 en una
-llamada, conservará ese valor en la próxima llamada.*/
-
+//receive the signal SIGUSR1 --> binary number 1 
+//receive the signal SIGUSR2 --> binary number 0 
+//It concatenates the received bits until get a complete byte (8 bits).
+//If a complete byte has been received, calls the function bin_to_char
+//to print the byte that is in binary.
+//'i' is set to 0, ready to receive again 8 bits.
 void	SIGUSR_handler(int sig, siginfo_t *info, void *context)
 {
 	static int client_pid;
@@ -25,72 +48,62 @@ void	SIGUSR_handler(int sig, siginfo_t *info, void *context)
 	static char byte = 0;
 	static int i = 0;
 	static int signal = 0;
-		// se trata de cada llamada al hanfler dentro de un mismo envio de argumentos
 	(void)context;
-
+	
 	client_pid = info->si_pid;
 	if (sig == SIGUSR1)
 		bit = 1;
 	else if (sig == SIGUSR2)
 		bit = 0;
-
 	signal++;
-	if (i < 8) // probar poniendo ++i
-	{
+	if (i++ < 8)
 		byte = (byte << 1) | bit;
-		i++;
-	}
 	if (i == 8)
 	{
-		ft_putchar_fd(byte, 1);
-		if (byte == '\0') // se;al de que se termino de imprimir todo
-		{
-			// printf("check.\n");
-			printf("\n%s%d Signals received successfully!%s\n\n", GREEN, signal,
-				END);
-			byte = 0;
-			i = 0;
-			signal = 0; // no puedo dorectamente quitarle el static int
-			if (kill(client_pid, SIGUSR1) == -1)
-			{
-				printf("\n%sServer: unexpected error.%s\n", RED, END);
-				exit(EXIT_FAILURE);
-			}
-			return ; // no hay nada mas que recibir
-		}
-		i = 0; // si no es el caracter nulo, tiene que pasar a recibir el sigueinte carcter, entonces reiniciamos el contador.
-				// no hace falta reiniciar byte porque va a irlo sobreescribiendo
+		signal = bin_to_char(byte, signal, client_pid);
+		i = 0;
 	}
-	usleep(100); // porque el usleep?
+	usleep(100);
 	kill(client_pid, SIGUSR2);
 }
 
-int	main(void)
+static void print_header (int pid_server)
 {
-	// print banner
-	int pid_server = getpid();
+	ft_printf("\n███╗   ███╗██╗███╗   ██╗██╗███");
+	ft_printf("█████╗ █████╗ ██╗     ██╗  ██╗\n");
+	ft_printf("████╗ ████║██║████╗  ██║██║╚══██");
+	ft_printf("╔══╝██╔══██╗██║     ██║ ██╔╝\n");
+	ft_printf("██╔████╔██║██║██╔██╗ ██║██║   ██");
+	ft_printf("║   ███████║██║     █████╔╝ \n");
+	ft_printf("██║╚██╔╝██║██║██║╚██╗██║██║   ██");
+	ft_printf("║   ██╔══██║██║     ██╔═██╗ \n");
+	ft_printf("██║ ╚═╝ ██║██║██║ ╚████║██║   ██");
+	ft_printf("║   ██║  ██║███████╗██║  ██╗\n");
+	ft_printf("╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ");
+	ft_printf("╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝\n\n");
+	ft_printf("%s                      PID: %d%s\n", RED, pid_server, END);
+	ft_printf("%s              ⊱ ────────────────────── ⊰%s\n", RED, END);
+}
 
-	ft_printf("\n███╗   ███╗██╗███╗   ██╗██╗████████╗ █████╗ ██╗     ██╗  ██╗\n");
-	printf("████╗ ████║██║████╗  ██║██║╚══██╔══╝██╔══██╗██║     ██║ ██╔╝\n");
-	printf("██╔████╔██║██║██╔██╗ ██║██║   ██║   ███████║██║     █████╔╝ \n");
-	printf("██║╚██╔╝██║██║██║╚██╗██║██║   ██║   ██╔══██║██║     ██╔═██╗ \n");
-	printf("██║ ╚═╝ ██║██║██║ ╚████║██║   ██║   ██║  ██║███████╗██║  ██╗\n");
-	printf("╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝\n\n");
-	printf("%s                        PID: %d%s\n", RED, pid_server, END);
-	printf("%s                ⊱ ────────────────────── ⊰%s\n", RED, END);
-
+//'while(1)' ensures that the process remains active in an infinite loop that
+//is waiting (pause) to receive signals and respond to them as defined in 
+//SIGUSR_handler function.
+//Once a signal is received, it returns to the beginning of the loop.
+int main(void)
+{
+	int pid_server;
 	struct sigaction	bitereceived;
-
+	
+	pid_server = getpid();
+	print_header (pid_server);
 	bitereceived.sa_sigaction = SIGUSR_handler;
 	bitereceived.sa_flags = SA_SIGINFO;
 	sigemptyset(&bitereceived.sa_mask);
-
 	while (1)
 	{
 		sigaction(SIGUSR1, &bitereceived, NULL);
 		sigaction(SIGUSR2, &bitereceived, NULL);
-		pause(); // pausamos hasta que se reciba otra se;al
+		pause();
 	}
-
 	return (0);
 }
