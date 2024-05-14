@@ -3,17 +3,15 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: marvin <marvin@student.42.fr>              +#+  +:+       +#+         #
+#    By: dtorrett <dtorrett@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/05/12 13:48:56 by marvin            #+#    #+#              #
-#    Updated: 2024/05/12 13:48:56 by marvin           ###   ########.fr        #
+#    Created: 2024/05/12 13:48:56 by dtorrett          #+#    #+#              #
+#    Updated: 2024/05/12 13:48:56 by dtorrett         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-#cambiar header!!!!!!!!!!!!!!!!!!
 
-
-SOURCES = server.c client.c 
+SOURCES = server.c client.c errors.c
 OBJECTS = $(SOURCES:.c=.o)
 LIBFT = libft/libft.a
 
@@ -32,7 +30,7 @@ server: server.o $(LIBFT)
 	@echo "📥 Server ready!\n"
 	@echo "------------------------------------------\n"
 	
-client: client.o $(LIBFT)
+client: client.o errors.c $(LIBFT)
 	$(CC) $(CFLAGS) $^ -o $@
 	@echo "\n------------------------------------------\n"
 	@echo "📟 Client ready!\n"

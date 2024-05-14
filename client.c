@@ -12,25 +12,6 @@
 
 #include "minitalk.h"
 
-static void error_msg(int i)
-{
-	if(i == 1)
-	{
-		ft_printf("%s\nError. please follow the format: <server_pid>", RED);
-		ft_printf(" <text to send>\n");
-		ft_printf("%s\nIf the text to send contains more than one word, ", END);
-		ft_printf("please enclose it in quotes\n");
-		ft_printf("\nexample: 1234 \"This is an example\"\n\n");
-	}
-	else if(i == 2)
-		ft_printf("%s\nError: The PID must be a positive integer.\n\n", RED);
-	else if(i == 3)
-		ft_printf("%s\nError: Please, insert a non-empty message.\n\n", RED);
-	else if(i == 4)
-		ft_printf("\n%s client: unexpected error.\n", RED);
-	exit (EXIT_FAILURE);
-}
-
 static int	is_num(char *num)
 {
 	int i;
@@ -45,37 +26,43 @@ static int	is_num(char *num)
 	return (1);
 }
 
-//It iterates char by char
-//Each char has its binary representation composed of 8 bits combining 0 and 1.
+//Each char has its binary representation composed of 8 bits combining 0 and 1
 //it checks if the most significant bit (leftmost) is 1 (& 128). 
 //If it's 1, it sends SIGUSR1 signal. If it's 0, it sends SIGUSR2 signal.
 //(c = c << 1) moves to the next bit of the character.
-//At the end, it sends the null character to indicate the end of the text.
-static void char_to_bin(char *text, int s_pid)
+static void	char_to_bin(char c, int pid)
 {
-	int i;
 	int bit;
-	
-	i = -1;
-	while (text[++i])
+
+	bit = 0;
+	while (bit < 8)
 	{
-		bit = 0;
-		while (bit++ < 8)
+		if (c & 128)
 		{
-			if (text[i] & 128)
-			{
-				if (kill(s_pid, SIGUSR1) == -1)
-					error_msg(4);
-			}
-			else
-			{
-				if (kill(s_pid, SIGUSR2) == -1)
-					error_msg(4);
-			}
-			text[i] = text[i] << 1;
-			pause();
-			usleep(100);
-		}		
+			if (kill(pid, SIGUSR1) == -1)
+				error_msg(4);
+		}
+		else
+		{
+			if (kill(pid, SIGUSR2) == -1)
+				error_msg(4);
+		}
+		c = c << 1;
+		bit++;
+		pause();
+		usleep(100);
+	}
+}
+
+//It iterates char by char and calls the fx chartobin.
+//At the end, it sends the null character to indicate the end of the text.
+static void text_sender(char *text, int s_pid)
+{
+	int i = 0;
+	while (text[i])
+	{
+		char_to_bin(text[i], s_pid);
+		i++;
 	}
 	char_to_bin('\0', s_pid);
 }
@@ -85,12 +72,12 @@ static void char_to_bin(char *text, int s_pid)
 //When SIGUSR1 is received, the signals were successfully sent.
 static void    signal_handler(int sig) 
 {
-	static int signal;
-	
-	signal = 0;
+	static int signal = 0;
+
 	if (sig == SIGUSR1)
 	{
 		ft_printf("\n%s%d Signals sent successfully!\n", GREEN, ++signal);
+		ft_printf("%s", END);
 		exit(EXIT_SUCCESS);
 	}
 	else if (sig == SIGUSR2)
@@ -114,9 +101,9 @@ int main(int argc, char **argv)
 		error_msg(3);
 	ft_printf("Client PID: %d\n", pid_client);
 	ft_printf("Text to send: %s\n", argv[2]);
-	ft_printf("%sSending text..\n", YELLOW);
+	ft_printf("%sSending text..%s\n", YELLOW, END);
 	signal(SIGUSR1, signal_handler);
 	signal(SIGUSR2, signal_handler);
-	char_to_bin(argv[2], pid_server);
+	text_sender(argv[2], pid_server);
 	return (0);
 }

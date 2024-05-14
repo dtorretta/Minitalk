@@ -22,8 +22,8 @@ int bin_to_char(char byte, int signal, int client_pid)
 	ft_putchar_fd(byte, 1);
 	if (byte == '\0')
 	{
-		ft_printf("\n%s%d Signals received successfully!%s\n\n", GREEN, signal,
-			END);
+		ft_printf("\n%s%d Signals received successfully!\n\n", GREEN, signal);
+		ft_printf("%s", END);
 		signal = 0;
 		if (kill(client_pid, SIGUSR1) == -1)
 		{
