@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dtorrett <dtorrett@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/11 17:54:35 by dtorrett          #+#    #+#             */
-/*   Updated: 2024/05/11 17:54:35 by dtorrett         ###   ########.fr       */
+/*   Created: 2024/05/15 15:52:44 by dtorrett          #+#    #+#             */
+/*   Updated: 2024/05/15 15:52:44 by dtorrett         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 static int	is_num(char *num)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (num[i])
@@ -32,7 +32,7 @@ static int	is_num(char *num)
 //(c = c << 1) moves to the next bit of the character.
 static void	char_to_bin(char c, int pid)
 {
-	int bit;
+	int	bit;
 
 	bit = 0;
 	while (bit < 8)
@@ -56,9 +56,11 @@ static void	char_to_bin(char c, int pid)
 
 //It iterates char by char and calls the fx chartobin.
 //At the end, it sends the null character to indicate the end of the text.
-static void text_sender(char *text, int s_pid)
+static void	text_sender(char *text, int s_pid)
 {
-	int i = 0;
+	int	i;
+
+	i = 0;
 	while (text[i])
 	{
 		char_to_bin(text[i], s_pid);
@@ -70,9 +72,9 @@ static void text_sender(char *text, int s_pid)
 //When SIGUSR2 is received, it just increases a received signals counter. 
 //Until SIGUSR1 is received, it means that not all the text has been sent.
 //When SIGUSR1 is received, the signals were successfully sent.
-static void    signal_handler(int sig) 
+static void	signal_handler(int sig)
 {
-	static int signal = 0;
+	static int	signal = 0;
 
 	if (sig == SIGUSR1)
 	{
@@ -85,14 +87,13 @@ static void    signal_handler(int sig)
 }
 
 //Error managing: cero/negativ PID or non numeric arguments
-int main(int argc, char **argv)
+int	main(int argc, char **argv)
 {
+	pid_t	pid_client;
+	pid_t	pid_server;
+
 	if (argc != 3)
 		error_msg(1);
-
-	pid_t pid_client;
-	pid_t pid_server;
-	
 	pid_client = getpid();
 	pid_server = atoi(argv[1]);
 	if (pid_server <= 0 || !is_num(argv[1]))

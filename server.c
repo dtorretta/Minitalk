@@ -5,19 +5,17 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: dtorrett <dtorrett@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/11 17:54:54 by dtorrett          #+#    #+#             */
-/*   Updated: 2024/05/11 17:54:54 by dtorrett         ###   ########.fr       */
+/*   Created: 2024/05/15 15:52:54 by dtorrett          #+#    #+#             */
+/*   Updated: 2024/05/15 15:52:54 by dtorrett         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minitalk.h"
 
-//It prints the character received and checks if it is the null character.
-//If so, that means that the string was fully printed.
+// It prints the character received and checks if it is the null character.
+// If so, that means that the string was fully printed.
 //'signals' is set to 0, ready to receive a new string and start counting again
-//As it uses 'EXIT_SUCCESS' and not 'exit (EXIT_SUCCESS)', the program 
-//will remain open, ready to receive a new string.
-int bin_to_char(char byte, int signal, int client_pid)
+int	bin_to_char(char byte, int signal, int client_pid)
 {
 	ft_putchar_fd(byte, 1);
 	if (byte == '\0')
@@ -30,26 +28,25 @@ int bin_to_char(char byte, int signal, int client_pid)
 			ft_printf("\n%sServer: unexpected error.%s\n", RED, END);
 			exit(EXIT_FAILURE);
 		}
-		EXIT_SUCCESS ;
 	}
-	return(signal);
+	return (signal);
 }
 
-//receive the signal SIGUSR1 --> binary number 1 
-//receive the signal SIGUSR2 --> binary number 0 
-//It concatenates the received bits until get a complete byte (8 bits).
-//If a complete byte has been received, calls the function bin_to_char
-//to print the byte that is in binary.
+// receive the signal SIGUSR1 --> binary number 1
+// receive the signal SIGUSR2 --> binary number 0
+// It concatenates the received bits until get a complete byte (8 bits).
+// If a complete byte has been received, calls the function bin_to_char
+// to print the byte that is in binary.
 //'i' is set to 0, ready to receive again 8 bits.
-void	SIGUSR_handler(int sig, siginfo_t *info, void *context)
+void	sigusr_handler(int sig, siginfo_t *info, void *context)
 {
-	static int client_pid;
-	static int bit = 0;
-	static char byte = 0;
-	static int i = 0;
-	static int signal = 0;
-	(void)context;
-	
+	static int	client_pid;
+	static int	bit = 0;
+	static char	byte = 0;
+	static int	i = 0;
+	static int	signal = 0;
+
+	(void) context;
 	client_pid = info->si_pid;
 	if (sig == SIGUSR1)
 		bit = 1;
@@ -67,7 +64,7 @@ void	SIGUSR_handler(int sig, siginfo_t *info, void *context)
 	kill(client_pid, SIGUSR2);
 }
 
-static void print_header (int pid_server)
+static void	print_header(int pid_server)
 {
 	ft_printf("\n███╗   ███╗██╗███╗   ██╗██╗███");
 	ft_printf("█████╗ █████╗ ██╗     ██╗  ██╗\n");
@@ -86,17 +83,17 @@ static void print_header (int pid_server)
 }
 
 //'while(1)' ensures that the process remains active in an infinite loop that
-//is waiting (pause) to receive signals and respond to them as defined in 
-//SIGUSR_handler function.
-//Once a signal is received, it returns to the beginning of the loop.
-int main(void)
+// is waiting (pause) to receive signals and respond to them as defined in
+// SIGUSR_handler function.
+// Once a signal is received, it returns to the beginning of the loop.
+int	main(void)
 {
-	int pid_server;
+	int					pid_server;
 	struct sigaction	bitereceived;
-	
+
 	pid_server = getpid();
-	print_header (pid_server);
-	bitereceived.sa_sigaction = SIGUSR_handler;
+	print_header(pid_server);
+	bitereceived.sa_sigaction = sigusr_handler;
 	bitereceived.sa_flags = SA_SIGINFO;
 	sigemptyset(&bitereceived.sa_mask);
 	while (1)

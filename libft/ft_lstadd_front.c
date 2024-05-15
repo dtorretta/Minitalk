@@ -6,7 +6,7 @@
 /*   By: dtorrett <dtorrett@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 16:06:29 by dtorrett          #+#    #+#             */
-/*   Updated: 2024/02/01 15:56:12 by dtorrett         ###   ########.fr       */
+/*   Updated: 2024/05/15 15:48:01 by dtorrett         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,11 @@
 
 void	ft_lstadd_front(t_list **lst, t_list *new)
 {
-	if (new == NULL || lst == NULL )
+	if (new == NULL || lst == NULL)
 		return ;
-	new -> next = *lst;
-	new -> prev = NULL;
+	new->next = *lst;
+	new->prev = NULL;
 	if (*lst != NULL)
-		(*lst) -> prev = new;
+		(*lst)->prev = new;
 	*lst = new;
 }
