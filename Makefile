@@ -10,15 +10,17 @@
 #                                                                              #
 # **************************************************************************** #
 
-
 SOURCES = server.c client.c errors.c
+BONUS_SOURCES = server_bonus.c client_bonus.c errors_bonus.c
 OBJECTS = $(SOURCES:.c=.o)
+BONUS_OBJECTS = $(BONUS_SOURCES:.c=.o)
 LIBFT = libft/libft.a
 
-CC = gcc
+CC = cc
 CFLAGS = -Wall -Wextra -Werror
 
 all: libft server client 
+bonus: libft server_bonus client_bonus 
 
 libft:
 	make -C libft
@@ -35,7 +37,18 @@ client: client.o errors.c $(LIBFT)
 	@echo "\n------------------------------------------\n"
 	@echo "📟 Client ready!\n"
 	@echo "------------------------------------------\n"
+ 
+server_bonus: server_bonus.o $(LIBFT)
+	$(CC) $(CFLAGS) $^ -o $@
+	@echo "\n------------------------------------------\n"
+	@echo "📥 Server bonus ready!\n"
+	@echo "------------------------------------------\n"
 	
+client_bonus: client_bonus.o errors_bonus.c $(LIBFT)
+	$(CC) $(CFLAGS) $^ -o $@
+	@echo "\n------------------------------------------\n"
+	@echo "📟 Client bonus ready!\n"
+	@echo "------------------------------------------\n"
 #' $^ ': represents all the prerequisites (object files, Libmlx and the libft library)
 #' $@ ': represents the target, which is the name of the executable
 
@@ -52,14 +65,14 @@ client: client.o errors.c $(LIBFT)
 #'-c $< -o $@': command to compile the source files (*.c) into object files (*.o) without performing linking. 
 
 clean:
-	rm -f $(OBJECTS)
+	rm -f $(OBJECTS) $(BONUS_OBJECTS)
 	$(MAKE) -C libft clean
 	@echo "\n------------------------------------------\n"
 	@echo "💧 Clean: Removed all the \".o\" files \n"
 	@echo "------------------------------------------\n"
 	
 fclean: clean
-	@rm -f server client libft/libft.a
+	@rm -f server server_bonus client client_bonus libft/libft.a
 	@echo "------------------------------------------\n"
 	@echo "🧼 Fclean: Removed the executables \n"
 	@echo "------------------------------------------\n"
